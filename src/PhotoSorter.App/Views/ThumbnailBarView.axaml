@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PhotoSorter.Core.ViewModels"
+             xmlns:converters="using:PhotoSorter.App.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="116"
+             x:Class="PhotoSorter.App.Views.ThumbnailBarView"
+             x:DataType="vm:ThumbnailBarViewModel">
+
+    <Border Background="{StaticResource PhotoSorterBackgroundBrush}"
+            BorderBrush="{StaticResource PhotoSorterToolbarBrush}"
+            BorderThickness="0,0,0,1"
+            Height="116">
+        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+            <ItemsControl x:Name="ThumbnailItemsControl" ItemsSource="{Binding Thumbnails}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="4" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ThumbnailItemViewModel">
+                        <Button Command="{Binding SelectCommand}"
+                                Padding="0"
+                                Margin="2"
+                                Background="Transparent">
+                            <Border BorderThickness="3"
+                                    BorderBrush="{Binding IsCurrent, Converter={x:Static converters:CurrentThumbnailBorderBrushConverter.Instance}}">
+                                <Grid Width="100" Height="100" ToolTip.Tip="{Binding ToolTipText}">
+                                    <Image Source="{Binding ThumbnailBytes, Converter={x:Static converters:PngBytesToBitmapConverter.Instance}}"
+                                           Opacity="{Binding ThumbnailBytes, Converter={x:Static converters:NullToOpacityConverter.Instance}}"
+                                           Stretch="Uniform">
+                                        <Image.Transitions>
+                                            <Transitions>
+                                                <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="QuadraticEaseOut" />
+                                            </Transitions>
+                                        </Image.Transitions>
+                                    </Image>
+                                    <!-- "beschädigte Bilder" (Roadmap Phase 16): a failed thumbnail stays visibly
+                                         distinguishable from one that simply hasn't finished generating yet. -->
+                                    <TextBlock Text="⚠"
+                                               FontSize="24"
+                                               Foreground="OrangeRed"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               IsVisible="{Binding HasError}" />
+                                </Grid>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Border>
+
+</UserControl>

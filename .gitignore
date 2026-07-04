@@ -1,0 +1,26 @@
+## .NET
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+
+## Test results
+[Tt]est[Rr]esult*/
+*.trx
+*.coverage
+*.coveragexml
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## VS Code
+.vscode/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## PhotoSorter runtime artifacts (never checked in)
+*.photosort

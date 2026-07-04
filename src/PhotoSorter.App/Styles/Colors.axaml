@@ -1,0 +1,14 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Dark-mode palette per UI-Design.md ("Dark Mode" section).
+        Defined as app-level resources (not overrides of FluentTheme's internal keys) so
+        PhotoSorter's look doesn't depend on Avalonia theme internals, and so a future
+        "Darstellung" settings page (Roadmap Phase 15) can swap these at runtime.
+    -->
+    <SolidColorBrush x:Key="PhotoSorterBackgroundBrush" Color="#202124" />
+    <SolidColorBrush x:Key="PhotoSorterToolbarBrush" Color="#2B2B2B" />
+    <SolidColorBrush x:Key="PhotoSorterAccentBrush" Color="#4A90E2" />
+    <SolidColorBrush x:Key="PhotoSorterHighlightBrush" Color="Orange" />
+    <SolidColorBrush x:Key="PhotoSorterTextBrush" Color="LightGray" />
+</ResourceDictionary>

@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PhotoSorter.Core.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="360" d:DesignHeight="240"
+        x:Class="PhotoSorter.App.Views.Dialogs.ApplyConfirmationWindow"
+        x:DataType="vm:ApplyConfirmationViewModel"
+        Width="360" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PhotoSorterBackgroundBrush}"
+        Title="Sortierung abgeschlossen">
+
+    <StackPanel Margin="24" Spacing="16">
+        <TextBlock Text="Sortierung abgeschlossen"
+                   FontSize="16"
+                   FontWeight="Bold"
+                   Foreground="{StaticResource PhotoSorterTextBrush}" />
+
+        <StackPanel Spacing="4">
+            <TextBlock Foreground="{StaticResource PhotoSorterTextBrush}">
+                <Run Text="Links: " /><Run Text="{Binding LeftCount}" /><Run Text=" Bilder" />
+            </TextBlock>
+            <TextBlock Foreground="{StaticResource PhotoSorterTextBrush}">
+                <Run Text="Rechts: " /><Run Text="{Binding RightCount}" /><Run Text=" Bilder" />
+            </TextBlock>
+            <TextBlock Foreground="{StaticResource PhotoSorterTextBrush}">
+                <Run Text="Übersprungen: " /><Run Text="{Binding SkippedCount}" /><Run Text=" Bilder" />
+            </TextBlock>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+            <Button Content="Abbrechen" Command="{Binding CancelCommand}" />
+            <Button Content="Anwenden" Command="{Binding ApplyCommand}" />
+        </StackPanel>
+    </StackPanel>
+
+</Window>

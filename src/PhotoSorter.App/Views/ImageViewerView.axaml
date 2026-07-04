@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PhotoSorter.Core.ViewModels"
+             xmlns:converters="using:PhotoSorter.App.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="600"
+             x:Class="PhotoSorter.App.Views.ImageViewerView"
+             x:DataType="vm:ImageViewerViewModel">
+
+    <Border Background="{StaticResource PhotoSorterBackgroundBrush}" ClipToBounds="True">
+      <Grid>
+        <!--
+            Swipe-out animation while sorting (SoftwareDesign.md/UI-Design.md: ~150 ms slide with
+            a slight rotation and fade). This container carries only the swipe transform; the
+            inner Image keeps its own zoom/pan transform (Phase 6) so the two compose independently.
+        -->
+        <Border Name="SwipeContainer"
+                Opacity="{Binding SwipeOpacity}"
+                RenderTransformOrigin="0.5,0.5">
+            <Border.RenderTransform>
+                <TransformGroup>
+                    <TranslateTransform X="{Binding SwipeOffsetX}">
+                        <TranslateTransform.Transitions>
+                            <Transitions>
+                                <!-- CubicEaseOut (Roadmap Phase 17: Animationen optimieren): the swipe starts
+                                     fast and settles gently, reading as more deliberate than a linear slide. -->
+                                <DoubleTransition Property="X" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                            </Transitions>
+                        </TranslateTransform.Transitions>
+                    </TranslateTransform>
+                    <RotateTransform Angle="{Binding SwipeRotationAngle}">
+                        <RotateTransform.Transitions>
+                            <Transitions>
+                                <DoubleTransition Property="Angle" Duration="0:0:0.15" Easing="CubicEaseOut" />
+                            </Transitions>
+                        </RotateTransform.Transitions>
+                    </RotateTransform>
+                </TransformGroup>
+            </Border.RenderTransform>
+            <Border.Transitions>
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="QuadraticEaseOut" />
+                </Transitions>
+            </Border.Transitions>
+
+            <Image Name="DisplayedImage"
+                   Source="{Binding CurrentImageBytes, Converter={x:Static converters:PngBytesToBitmapConverter.Instance}}"
+                   Stretch="{Binding ZoomMode, Converter={x:Static converters:ZoomModeToStretchConverter.Instance}}"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   RenderTransformOrigin="0.5,0.5">
+                <Image.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform ScaleX="{Binding ZoomFactor}" ScaleY="{Binding ZoomFactor}" />
+                        <TranslateTransform X="{Binding PanOffsetX}" Y="{Binding PanOffsetY}" />
+                    </TransformGroup>
+                </Image.RenderTransform>
+            </Image>
+        </Border>
+
+        <!-- "Bildanzeige ist immer zentral" (SoftwareDesign.md): a failed image is never just a
+             silent blank canvas - Roadmap Phase 16 (beschädigte Bilder, fehlende Dateien, Zugriffsfehler). -->
+        <TextBlock Text="{Binding ImageLoadErrorMessage}"
+                   IsVisible="{Binding HasImageLoadError}"
+                   Foreground="{StaticResource PhotoSorterTextBrush}"
+                   FontSize="16"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   MaxWidth="480"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+</UserControl>

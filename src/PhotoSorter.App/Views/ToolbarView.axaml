@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PhotoSorter.Core.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="48"
+             x:Class="PhotoSorter.App.Views.ToolbarView"
+             x:DataType="vm:ToolbarViewModel">
+
+    <Border Background="{StaticResource PhotoSorterToolbarBrush}" Padding="8">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="📁 Quelle"
+                    Command="{Binding SelectSourceFolderCommand}"
+                    ToolTip.Tip="Quellordner auswählen (rekursiv nach Bildern durchsucht)" />
+
+            <Button Content="⬅ Links" ToolTip.Tip="{Binding LeftTargetDisplay, StringFormat='Linkes Sortierziel: {0}'}">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuItem Header="Papierkorb" Command="{Binding SelectLeftTargetTrashCommand}" />
+                        <MenuItem Header="Ordner wählen..." Command="{Binding SelectLeftTargetFolderCommand}" />
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
+
+            <Button Content="➡ Rechts"
+                    Command="{Binding SelectRightTargetCommand}"
+                    ToolTip.Tip="{Binding RightTargetDisplay, StringFormat='Rechtes Sortierziel: {0}'}" />
+
+            <Button Content="✔ Anwenden"
+                    Command="{Binding ApplyCommand}"
+                    ToolTip.Tip="Alle Sortierentscheidungen anwenden (Dateien verschieben bzw. in den Papierkorb legen)" />
+
+            <Button Content="⚙ Einstellungen"
+                    Command="{Binding OpenSettingsCommand}"
+                    ToolTip.Tip="Hotkeys, Darstellung und Animationen anpassen" />
+            <Button Content="❓ Hilfe"
+                    Command="{Binding ShowHelpCommand}"
+                    ToolTip.Tip="Aktuelle Tastenkürzel anzeigen" />
+        </StackPanel>
+    </Border>
+
+</UserControl>

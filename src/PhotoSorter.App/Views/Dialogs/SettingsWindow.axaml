@@ -1,0 +1,104 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PhotoSorter.Core.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="620"
+        x:Class="PhotoSorter.App.Views.Dialogs.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Width="480" SizeToContent="Height"
+        MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource PhotoSorterBackgroundBrush}"
+        Title="Einstellungen">
+
+    <ScrollViewer MaxHeight="700">
+        <StackPanel Margin="24" Spacing="20">
+
+            <TextBlock Text="Einstellungen"
+                       FontSize="18"
+                       FontWeight="Bold"
+                       Foreground="{StaticResource PhotoSorterTextBrush}" />
+
+            <!-- Darstellung -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Darstellung"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PhotoSorterTextBrush}" />
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               Text="Dark Mode"
+                               Foreground="{StaticResource PhotoSorterTextBrush}"
+                               ToolTip.Tip="PhotoSorter verwendet ausschließlich Dark Mode - siehe docs/architecture-decisions.md, Punkt 5." />
+                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding DarkModeEnabled}" IsEnabled="False" />
+                </Grid>
+
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               Text="Animationen"
+                               Foreground="{StaticResource PhotoSorterTextBrush}" />
+                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding AnimationsEnabled}" />
+                </Grid>
+            </StackPanel>
+
+            <!-- Ordner merken -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Ordner merken"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource PhotoSorterTextBrush}" />
+                <TextBlock TextWrapping="Wrap"
+                           Foreground="{StaticResource PhotoSorterTextBrush}"
+                           Opacity="0.7"
+                           Text="Der zuletzt gewählte Quellordner sowie die Links-/Rechts-Zielordner werden automatisch für die nächste Sitzung vorgeschlagen bzw. wiederhergestellt." />
+            </StackPanel>
+
+            <!-- Hotkeys -->
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                               Text="Hotkeys"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource PhotoSorterTextBrush}" />
+                    <Button Grid.Column="1" Content="Standardwerte" Command="{Binding ResetHotkeysCommand}" />
+                </Grid>
+
+                <ItemsControl ItemsSource="{Binding HotkeyBindings}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:HotkeyBindingViewModel">
+                            <StackPanel Margin="0,4" Spacing="2">
+                                <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                               Text="{Binding DisplayName}"
+                                               Foreground="{StaticResource PhotoSorterTextBrush}" />
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               Margin="0,0,8,0" MinWidth="110" HorizontalAlignment="Right"
+                                               Text="Drücke eine Taste..."
+                                               FontStyle="Italic"
+                                               Foreground="{StaticResource PhotoSorterHighlightBrush}"
+                                               IsVisible="{Binding IsCapturing}" />
+                                    <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                               Margin="0,0,8,0" MinWidth="110" HorizontalAlignment="Right"
+                                               Text="{Binding Chord}"
+                                               Foreground="{StaticResource PhotoSorterAccentBrush}"
+                                               IsVisible="{Binding !IsCapturing}" />
+                                    <Button Grid.Column="2" Content="Ändern" Command="{Binding BeginCaptureCommand}" />
+                                </Grid>
+                                <TextBlock Text="{Binding ConflictMessage}"
+                                           Foreground="OrangeRed"
+                                           FontSize="11"
+                                           IsVisible="{Binding HasConflict}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <Button Content="Schließen" Command="{Binding CloseCommand}" HorizontalAlignment="Right" />
+        </StackPanel>
+    </ScrollViewer>
+
+</Window>
