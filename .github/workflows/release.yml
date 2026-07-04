@@ -1,0 +1,91 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+
+# Guards against two rapid pushes racing to update the same "latest" tag/release.
+concurrency:
+  group: release-latest
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - run: dotnet restore
+      - run: dotnet test -c Release
+
+  package:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: win-x64
+            os: windows-latest
+          - rid: osx-x64
+            os: macos-latest
+          - rid: osx-arm64
+            os: macos-latest
+          - rid: linux-x64
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # windows-latest has no reliable `zip` (not even via Git Bash), so it gets its own
+      # PowerShell path instead of the shared script - see docs/architecture-decisions.md.
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          dotnet publish src/PhotoSorter.App/PhotoSorter.App.csproj -c Release -r win-x64 --self-contained true -o publish
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path publish/* -DestinationPath dist/PhotoSorter-win-x64.zip
+
+      - name: Package (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: ./scripts/package.sh ${{ matrix.rid }} dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.rid }}
+          path: dist/*.zip
+
+  release:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # merge-multiple flattens every per-RID artifact directly into dist/ (each has a unique
+      # PhotoSorter-<rid>.zip filename, so there's no collision risk).
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: dist
+          merge-multiple: true
+
+      # action-gh-release does NOT move an existing "latest" tag to the new commit on its own
+      # (see softprops/action-gh-release#644) - the old release/tag must be removed first so the
+      # rolling "latest" release always points at the newest main commit.
+      - name: Remove previous "latest" release and tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release delete latest --cleanup-tag --yes || true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: "Latest build (${{ github.sha }})"
+          make_latest: "true"
+          files: dist/*.zip

@@ -24,3 +24,6 @@ Thumbs.db
 
 ## PhotoSorter runtime artifacts (never checked in)
 *.photosort
+
+## Local packaging output (make package / make package-all)
+dist/

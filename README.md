@@ -26,6 +26,32 @@ dotnet run --project src/PhotoSorter.App  # Anwendung starten
 
 Für eine Release-Konfiguration `-c Release` an `build`/`test`/`run` anhängen.
 
+## Paketieren / Ausprobieren
+
+Fertige, direkt startbare Pakete für Windows, macOS (Intel & Apple Silicon)
+und Linux gibt es ohne eigenen Build im
+[„latest"-Release](https://github.com/T3xtra/photo-sorter/releases/tag/latest)
+dieses Repositories – er wird bei jedem Push auf `main` automatisch neu
+gebaut (`.github/workflows/release.yml`).
+
+Für ein lokales Paket der eigenen Plattform genügt ein Befehl:
+
+```bash
+make package          # baut ein self-contained Paket für die aktuelle Plattform nach dist/
+make package-all       # baut Pakete für alle vier Plattformen (win-x64, osx-x64, osx-arm64, linux-x64)
+```
+
+`make package` führt vorher automatisch die Tests aus. Die Pakete sind
+self-contained (keine .NET-Installation auf dem Zielrechner nötig) und
+enthalten keine Code-Signatur, daher beim ersten Start:
+
+- **Windows**: SmartScreen warnt bei der `.exe` – „Weitere Informationen" →
+  „Trotzdem ausführen".
+- **macOS**: Gatekeeper warnt beim `.app` – Rechtsklick → „Öffnen", oder
+  vorab `xattr -cr PhotoSorter.app` im Terminal.
+- **Linux**: `chmod +x PhotoSorter.App` falls die Ausführungsrechte beim
+  Entpacken verloren gehen.
+
 ## Projektstruktur
 
 | Projekt | Inhalt |

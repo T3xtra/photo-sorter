@@ -674,3 +674,62 @@ Warnungen/Fehler, 191/191 Tests grün) und die daraus gebaute
 Debug-only-Verifikation hätte Release-spezifische Probleme (z. B.
 abweichendes Optimierungsverhalten) sonst bis zu einem tatsächlichen
 Release-Vorgang verborgen.
+
+## 28. Paketierung: self-contained statt Framework-dependent; rollender `latest`-Release; Windows separat von `scripts/package.sh`
+
+**Self-contained statt Framework-dependent:** `scripts/package.sh` published
+mit `--self-contained true`, ohne `PublishSingleFile` und ohne Trimming.
+Self-contained bedeutet größere Pakete (~45–75 MB je Plattform statt
+wenigen MB), aber niemand, der die App nur "einmal ausprobieren" möchte,
+soll vorher eine passende .NET-Runtime installieren müssen.
+`PublishSingleFile` wurde bewusst weggelassen, weil es bei Avalonia-Apps mit
+nativen Abhängigkeiten (SkiaSharp) zu Entpack-Problemen zur Laufzeit führen
+kann; Trimming wurde weggelassen, weil `JsonSettingsService`/
+`JsonProjectFileSerializer` reflection-basierte `System.Text.Json`-
+Serialisierung nutzen, die der Trimmer ohne zusätzliche Annotationen
+kaputt-optimieren könnte. Ein einfacher, kopierbarer Ordner (bzw. ein
+minimales `.app`-Bundle auf macOS) ist robuster als beides.
+
+**Minimales, unsigniertes macOS-`.app`-Bundle:** `scripts/package.sh` baut
+für `osx-*` kein bloßes Verzeichnis, sondern
+`PhotoSorter.app/Contents/{MacOS,Resources}` plus ein statisches
+`packaging/macos/Info.plist` (`CFBundleExecutable=PhotoSorter.App`, passend
+zum tatsächlichen, unveränderten Binärnamen). Das ermöglicht "Rechtsklick →
+Öffnen" statt eine nackte Unix-Binärdatei im Terminal starten zu müssen.
+Ohne Code-Signatur/Notarisierung (dafür fehlt ein Apple-Developer-Zertifikat)
+warnt Gatekeeper beim ersten Start – dokumentiert in `README.md`, nicht
+softwareseitig umgangen.
+
+**Windows-Paketierung läuft nicht über `scripts/package.sh`:** Auf
+GitHub-`windows-latest`-Runnern ist weder `zip` noch ein verlässliches `zip`
+in der mitgelieferten Git-Bash vorhanden (bestätigt: GitHub hat 7-Zip aus
+dem Standard-Image entfernt, `zip` gab es dort nie). Der Windows-Zweig der
+GitHub Action nutzt deshalb direkt PowerShells eingebautes
+`Compress-Archive` statt eine plattformübergreifende Bash-Lösung zu
+erzwingen. Lokal (`make package`/`make package-all`, ausgeführt auf einem
+Mac) behandelt das Skript `win-x64` dagegen einfach wie `linux-x64` (dort
+ist `zip` vorhanden) – die beiden Codepfade unterscheiden sich also bewusst
+zwischen lokalem Build und CI, nicht aus Inkonsistenz, sondern weil `make`
+ohnehin ein Unix-Werkzeug ist und die CI-Windows-Umgebung eine andere
+Toolchain hat.
+
+**Cross-RID-Publish von einer einzigen Maschine aus funktioniert:**
+`dotnet publish -r <rid> --self-contained true` lädt das passende
+Runtime-Pack für die Ziel-RID über NuGet, unabhängig von Host-Betriebssystem
+und -Architektur (kein AOT, kein ReadyToRun, kein ARM-Cross-Toolchain
+nötig). Dadurch kann `make package-all` alle vier Plattformen von einem
+einzigen Mac aus bauen; die GitHub Action nutzt trotzdem eine
+Runner-Matrix (je eine native Umgebung pro Ziel-Betriebssystem), weil der
+Windows-Zweig ohnehin PowerShell statt Bash braucht.
+
+**Rollender `latest`-Release statt Tag pro Push:** Auf Nutzerwunsch erzeugt
+die GitHub Action keinen neuen Tag pro Push, sondern aktualisiert einen
+einzigen Release/Tag `latest`. Wichtige Einschränkung von
+`softprops/action-gh-release`: die Action verschiebt einen bereits
+existierenden Tag NICHT automatisch auf den neuen Commit (`target_commitish`
+wirkt nur bei der Ersterstellung). Der Workflow löscht deshalb vor jedem
+Neu-Erstellen explizit den alten `latest`-Release samt Tag
+(`gh release delete latest --cleanup-tag --yes || true` – das `|| true`
+macht den allerersten Lauf ohne bestehenden Release zum No-op). Ein
+`concurrency`-Guard auf Workflow-Ebene verhindert, dass zwei schnell
+aufeinanderfolgende Pushes gleichzeitig um denselben Tag konkurrieren.
