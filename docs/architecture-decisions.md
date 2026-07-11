@@ -733,3 +733,45 @@ Neu-Erstellen explizit den alten `latest`-Release samt Tag
 macht den allerersten Lauf ohne bestehenden Release zum No-op). Ein
 `concurrency`-Guard auf Workflow-Ebene verhindert, dass zwei schnell
 aufeinanderfolgende Pushes gleichzeitig um denselben Tag konkurrieren.
+
+## 29. Windows-Paket bekommt doch `PublishSingleFile` – abweichend von Punkt 28, aber nur dort
+
+Punkt 28 begründet den Verzicht auf `PublishSingleFile` für alle Plattformen
+mit möglichen Native-Library-Entpack-Problemen (SkiaSharp). In der Praxis
+zeigte sich aber: Ohne `.app`-Bundle-Wrapper wie auf macOS bleibt bei einem
+reinen self-contained Windows-Publish ein Ordner mit über 100 losen DLLs
+neben der `.exe` übrig – nach dem Entpacken ist für einen Nutzer nicht
+erkennbar, welche Datei überhaupt gestartet werden soll. Deshalb bekommt
+**nur der Windows-Zweig** (in `scripts/package.sh` für `win-*` und im
+identischen Windows-Job in `.github/workflows/release.yml`) zusätzlich
+`-p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+-p:DebugType=none`: Das bündelt alle verwalteten Assemblies sowie die
+nativen SkiaSharp/HarfBuzzSharp-Bibliotheken in eine einzige
+`PhotoSorter.App.exe`, die sich beim ersten Start selbst in einen
+Temp-Ordner entpackt – nach dem Entpacken des Release-Zips liegt dort
+buchstäblich nur noch die eine `.exe`.
+
+**Warum nicht auch für macOS/Linux:** macOS hat mit dem `.app`-Bundle
+(Punkt 27/28) bereits eine native, getestete Lösung für "eine Sache zum
+Öffnen"; Linux-Nutzer, die eine gepackte `.zip` entpacken und `chmod +x`
+ausführen, sind mit dieser Arbeitsweise vertraut. Beide wurden vom Nutzer
+nicht als Problem gemeldet – eine Änderung dort hätte nur unnötiges Risiko
+auf bereits funktionierenden Plattformen bedeutet (siehe Punkt 28 zur
+Skepsis gegenüber `PublishSingleFile` bei Avalonia/Skia).
+
+**Übrig gebliebene `.pdb`-Dateien:** `-p:DebugType=none` unterdrückt nur die
+projekteigene `PhotoSorter.App.pdb`; die beiden nativen
+`libSkiaSharp.pdb`/`libHarfBuzzSharp.pdb` (zusammen größer als die `.exe`
+selbst, ca. 100 MB) kommen als Content-Item aus den jeweiligen NuGet-Paketen
+und werden deshalb explizit per `rm`/`Remove-Item` aus dem Publish-Ordner
+entfernt, bevor gezippt wird – reine Debug-Symbole, zur Laufzeit nie
+benötigt.
+
+**Nicht selbst auf echtem Windows verifiziert:** Der Build wurde lokal
+(cross-publish von einem Mac aus) erfolgreich erzeugt und das
+Ordner-Ergebnis geprüft (genau eine `.exe`), aber mangels Windows-Maschine
+in dieser Umgebung nicht tatsächlich gestartet. `PublishSingleFile` +
+`IncludeNativeLibrariesForSelfExtract` für self-contained Avalonia-Apps auf
+Windows ist ein in der Avalonia-Community verbreitetes, dokumentiertes
+Muster, aber der erste echte Praxistest erfolgt beim nächsten `latest`-Build
+durch den Nutzer selbst.

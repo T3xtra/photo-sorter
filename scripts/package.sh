@@ -26,12 +26,19 @@ WORK_DIR="$(mktemp -d)"
 trap 'rm -rf "$WORK_DIR"' EXIT
 PUBLISH_DIR="$WORK_DIR/publish"
 
+PUBLISH_ARGS=(-c "$CONFIGURATION" -r "$RID" --self-contained true -o "$PUBLISH_DIR")
+if [[ "$RID" == win-* ]]; then
+    # Windows has no .app-bundle-like OS convention to hide a multi-file folder behind (unlike
+    # the macOS case below), so a plain self-contained publish leaves ~100+ loose DLLs next to
+    # the .exe after unzipping - confusing for someone who just wants to double-click something.
+    # PublishSingleFile bundles it all into one PhotoSorter.App.exe; DebugType=none drops our own
+    # .pdb (the two native SkiaSharp/HarfBuzzSharp .pdb files are removed below instead, since
+    # those come from the NuGet packages' content items, not our own build).
+    PUBLISH_ARGS+=(-p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none)
+fi
+
 echo "Publishing $EXECUTABLE_NAME for $RID ($CONFIGURATION, self-contained)..."
-"$DOTNET" publish "$PROJECT" \
-    -c "$CONFIGURATION" \
-    -r "$RID" \
-    --self-contained true \
-    -o "$PUBLISH_DIR"
+"$DOTNET" publish "$PROJECT" "${PUBLISH_ARGS[@]}"
 
 mkdir -p "$OUT_DIR"
 ZIP_PATH="$OUT_DIR/${APP_NAME}-${RID}.zip"
@@ -50,6 +57,9 @@ case "$RID" in
         ( cd "$WORK_DIR" && zip -r -y -q "$REPO_ROOT/$ZIP_PATH" "${APP_NAME}.app" )
         ;;
     linux-*|win-*)
+        if [[ "$RID" == win-* ]]; then
+            rm -f "$PUBLISH_DIR"/*.pdb
+        fi
         STAGE_DIR="$WORK_DIR/${APP_NAME}-${RID}"
         mkdir -p "$STAGE_DIR"
         cp -R "$PUBLISH_DIR"/. "$STAGE_DIR/"

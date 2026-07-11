@@ -43,11 +43,18 @@ jobs:
 
       # windows-latest has no reliable `zip` (not even via Git Bash), so it gets its own
       # PowerShell path instead of the shared script - see docs/architecture-decisions.md.
+      # PublishSingleFile bundles the ~100+ self-contained DLLs into one PhotoSorter.App.exe -
+      # Windows has no .app-bundle-like OS convention to hide a loose-files folder behind
+      # (unlike the macOS package below), so without this a user unzipping the release would
+      # see a folder full of unfamiliar DLLs instead of one obviously runnable file. The two
+      # native SkiaSharp/HarfBuzzSharp .pdb files are NuGet content items (not ours to control
+      # via DebugType) and are removed explicitly.
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          dotnet publish src/PhotoSorter.App/PhotoSorter.App.csproj -c Release -r win-x64 --self-contained true -o publish
+          dotnet publish src/PhotoSorter.App/PhotoSorter.App.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o publish
+          Remove-Item -Path publish/*.pdb -Force -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path publish/* -DestinationPath dist/PhotoSorter-win-x64.zip
 
