@@ -851,3 +851,44 @@ nach der Konstruktion einmalig auf
 `imageViewerViewModel.ResetZoomCommand` setzt - keine neue Kopplung
 zwischen den Geschwister-ViewModels, nur eine Erweiterung der bereits
 etablierten Bridge-Stelle.
+
+## 32. macOS-Paket (osx-arm64) war "beschädigt": fehlendes erneutes Signieren des zusammengebauten `.app`-Bundles
+
+**Symptom:** Nach dem Entpacken meldete macOS bei `PhotoSorter.app` (osx-arm64)
+"ist beschädigt und kann nicht geöffnet werden" - ein harter Fehler, nicht
+nur die übliche Gatekeeper-Warnung für unsignierte Apps.
+
+**Ursache, empirisch nachgestellt (nicht nur vermutet):** `dotnet publish`
+signiert die rohe ausführbare Datei für arm64 bereits automatisch ad-hoc
+(Apple erzwingt für Apple-Silicon-Binärdateien mindestens eine Ad-hoc-Signatur,
+sonst startet der Prozess gar nicht). `scripts/package.sh` kopiert diese
+bereits signierte Datei danach aber in ein selbst zusammengebautes
+`.app`-Bundle (`Contents/MacOS` + `Contents/Resources` + `Info.plist`) - die
+Signatur der rohen Datei deckt dieses neu hinzugekommene Info.plist/Resources
+aber nicht ab. Mit `spctl -a -vvv --type execute` (dem tatsächlichen
+Gatekeeper-Prüfbefehl) ließ sich das exakt reproduzieren:
+`"code has no resources but signature indicates they must be present"` -
+genau diese Siegel-Inkonsistenz ist es, die macOS nach dem Setzen des
+Quarantäne-Flags (simuliert via `xattr -w com.apple.quarantine ...`, wie es
+ein echter Browser-/GitHub-Download setzt) als "beschädigt" statt als
+normale "unbekannter Entwickler"-Warnung meldet.
+
+**Fix:** `scripts/package.sh` signiert das fertig zusammengebaute Bundle
+jetzt als Ganzes neu: `codesign --force --deep --sign - "$BUNDLE_DIR"`
+(Ad-hoc, `-sign -` braucht kein Apple-Developer-Zertifikat). Nach diesem
+Schritt zeigte derselbe `spctl`-Test nur noch die normale, erwartete
+`"rejected / source=no usable signature"` - das ist die reguläre "nicht
+notarisiert"-Meldung, die per Rechtsklick → Öffnen umgangen werden kann
+(bereits in README.md dokumentiert), nicht mehr der harte
+"beschädigt"-Fehler. Zusätzlich verifiziert: Ein Startversuch der
+quarantänisierten, neu signierten App führte zum normalen
+`CoreServicesUIAgent`-Zustimmungsdialog ("von einem nicht verifizierten
+Entwickler") statt einem sofortigen Abbruch vor Prozessstart.
+
+Der Windows- und Linux-Paketierungspfad ist von diesem Problem nicht
+betroffen (kein `.app`-Bundle-Konzept, keine vergleichbare
+Codesigning-Durchsetzung), daher wurde die Änderung gezielt auf den
+`osx-*`-Zweig von `scripts/package.sh` beschränkt - sowohl `make
+package`/`make package-all` als auch der `osx-x64`/`osx-arm64`-Matrix-Zweig
+von `.github/workflows/release.yml` rufen dasselbe Skript auf und profitieren
+automatisch, ohne dass die Workflow-Datei selbst geändert werden musste.

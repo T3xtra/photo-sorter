@@ -47,13 +47,19 @@ rm -f "$ZIP_PATH"
 case "$RID" in
     osx-*)
         # Minimal, unsigned .app bundle so macOS users can (right-click ->) open it directly
-        # instead of running a bare executable from a folder. Not code-signed/notarized -
-        # Gatekeeper will warn on first launch, documented in README.md.
+        # instead of running a bare executable from a folder. Not Developer-ID-signed/notarized -
+        # Gatekeeper will still warn on first launch (documented in README.md), but the bundle
+        # MUST be ad-hoc re-signed as a whole after assembly (see docs/architecture-decisions.md):
+        # dotnet's apphost already carries its own ad-hoc signature for the raw executable alone,
+        # which does NOT cover the Info.plist/Resources added here - that mismatch is what macOS
+        # reports as "app is damaged and can't be opened" (a hard failure, not just a Gatekeeper
+        # warning) once the bundle picks up a quarantine flag from a real download.
         BUNDLE_DIR="$WORK_DIR/${APP_NAME}.app"
         mkdir -p "$BUNDLE_DIR/Contents/MacOS" "$BUNDLE_DIR/Contents/Resources"
         cp -R "$PUBLISH_DIR"/. "$BUNDLE_DIR/Contents/MacOS/"
         cp packaging/macos/Info.plist "$BUNDLE_DIR/Contents/Info.plist"
         chmod +x "$BUNDLE_DIR/Contents/MacOS/$EXECUTABLE_NAME"
+        codesign --force --deep --sign - "$BUNDLE_DIR"
         ( cd "$WORK_DIR" && zip -r -y -q "$REPO_ROOT/$ZIP_PATH" "${APP_NAME}.app" )
         ;;
     linux-*|win-*)
