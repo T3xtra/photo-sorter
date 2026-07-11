@@ -114,4 +114,30 @@ public sealed class ImageViewerZoomTests
         Assert.Equal(0, sut.PanOffsetX);
         Assert.Equal(0, sut.PanOffsetY);
     }
+
+    [Fact]
+    public void ResetZoomCommand_WhileZoomedAndPanned_ReturnsToFitAndResetsPan()
+    {
+        var sut = CreateSut();
+        sut.ApplyZoomDelta(1);
+        sut.SetPan(40, -20);
+
+        sut.ResetZoomCommand.Execute(null);
+
+        Assert.Equal(ZoomMode.FitToWindow, sut.ZoomMode);
+        Assert.Equal(1.0, sut.ZoomFactor);
+        Assert.Equal(0, sut.PanOffsetX);
+        Assert.Equal(0, sut.PanOffsetY);
+    }
+
+    [Fact]
+    public void ResetZoomCommand_UnlikeToggleZoomMode_AlwaysLandsOnFitToWindow()
+    {
+        var sut = CreateSut();
+        sut.ToggleZoomModeCommand.Execute(null); // now Manual @ 100%
+
+        sut.ResetZoomCommand.Execute(null);
+
+        Assert.Equal(ZoomMode.FitToWindow, sut.ZoomMode);
+    }
 }

@@ -8,35 +8,35 @@
              x:DataType="vm:ToolbarViewModel">
 
     <Border Background="{StaticResource PhotoSorterToolbarBrush}" Padding="8">
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button Content="📁 Quelle"
-                    Command="{Binding SelectSourceFolderCommand}"
-                    ToolTip.Tip="Quellordner auswählen (rekursiv nach Bildern durchsucht)" />
+        <!-- Three-zone layout: Quelle stays left-aligned, Anwenden is centered in the whole
+             toolbar (equal-star columns 0/2 do that regardless of how wide each side's content
+             is), Hilfe+Einstellungen are grouped at the right edge with Einstellungen last. -->
+        <Grid ColumnDefinitions="*,Auto,*">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Left">
+                <Button Content="📁 Quelle"
+                        FontFamily="{StaticResource PhotoSorterIconFontFamily}"
+                        Command="{Binding SelectSourceFolderCommand}"
+                        ToolTip.Tip="Quellordner auswählen (rekursiv nach Bildern durchsucht)" />
+            </StackPanel>
 
-            <Button Content="⬅ Links" ToolTip.Tip="{Binding LeftTargetDisplay, StringFormat='Linkes Sortierziel: {0}'}">
-                <Button.Flyout>
-                    <MenuFlyout>
-                        <MenuItem Header="Papierkorb" Command="{Binding SelectLeftTargetTrashCommand}" />
-                        <MenuItem Header="Ordner wählen..." Command="{Binding SelectLeftTargetFolderCommand}" />
-                    </MenuFlyout>
-                </Button.Flyout>
-            </Button>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                <Button Content="✔ Anwenden"
+                        FontFamily="{StaticResource PhotoSorterIconFontFamily}"
+                        Command="{Binding ApplyCommand}"
+                        ToolTip.Tip="Alle Sortierentscheidungen anwenden (Dateien verschieben bzw. in den Papierkorb legen)" />
+            </StackPanel>
 
-            <Button Content="➡ Rechts"
-                    Command="{Binding SelectRightTargetCommand}"
-                    ToolTip.Tip="{Binding RightTargetDisplay, StringFormat='Rechtes Sortierziel: {0}'}" />
-
-            <Button Content="✔ Anwenden"
-                    Command="{Binding ApplyCommand}"
-                    ToolTip.Tip="Alle Sortierentscheidungen anwenden (Dateien verschieben bzw. in den Papierkorb legen)" />
-
-            <Button Content="⚙ Einstellungen"
-                    Command="{Binding OpenSettingsCommand}"
-                    ToolTip.Tip="Hotkeys, Darstellung und Animationen anpassen" />
-            <Button Content="❓ Hilfe"
-                    Command="{Binding ShowHelpCommand}"
-                    ToolTip.Tip="Aktuelle Tastenkürzel anzeigen" />
-        </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                <Button Content="❓ Hilfe"
+                        FontFamily="{StaticResource PhotoSorterIconFontFamily}"
+                        Command="{Binding ShowHelpCommand}"
+                        ToolTip.Tip="Aktuelle Tastenkürzel anzeigen" />
+                <Button Content="⚙ Einstellungen"
+                        FontFamily="{StaticResource PhotoSorterIconFontFamily}"
+                        Command="{Binding OpenSettingsCommand}"
+                        ToolTip.Tip="Hotkeys, Darstellung, Zielordner und Animationen anpassen" />
+            </StackPanel>
+        </Grid>
     </Border>
 
 </UserControl>

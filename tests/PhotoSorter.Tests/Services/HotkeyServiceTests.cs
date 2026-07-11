@@ -28,6 +28,7 @@ public sealed class HotkeyServiceTests
 
         Assert.Equal(HotkeyAction.ZoomIn, sut.Resolve(new HotkeyChord("OemPlus", Ctrl: true)));
         Assert.Equal(HotkeyAction.ZoomOut, sut.Resolve(new HotkeyChord("OemMinus", Ctrl: true)));
+        Assert.Equal(HotkeyAction.ResetZoom, sut.Resolve(new HotkeyChord("D0", Ctrl: true)));
         Assert.Null(sut.Resolve(new HotkeyChord("OemPlus")));
     }
 

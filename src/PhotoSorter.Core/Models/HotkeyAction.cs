@@ -24,4 +24,7 @@ public enum HotkeyAction
     ZoomIn,
 
     ZoomOut,
+
+    /// <summary>Resets zoom/pan back to "Bild einpassen" (fit to window).</summary>
+    ResetZoom,
 }

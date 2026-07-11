@@ -20,6 +20,7 @@ public sealed class HotkeyService : IHotkeyService
         [HotkeyAction.ToggleFullscreen] = new("F"),
         [HotkeyAction.ZoomIn] = new("OemPlus", Ctrl: true),
         [HotkeyAction.ZoomOut] = new("OemMinus", Ctrl: true),
+        [HotkeyAction.ResetZoom] = new("D0", Ctrl: true),
     };
 
     private readonly ISettingsService _settingsService;

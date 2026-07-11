@@ -11,4 +11,14 @@
     <SolidColorBrush x:Key="PhotoSorterAccentBrush" Color="#4A90E2" />
     <SolidColorBrush x:Key="PhotoSorterHighlightBrush" Color="Orange" />
     <SolidColorBrush x:Key="PhotoSorterTextBrush" Color="LightGray" />
+
+    <!--
+        Inter (the app-wide default font, via Avalonia.Fonts.Inter) has no glyphs for pictograph
+        symbols like folder/gear/question-mark (their Unicode default is "emoji presentation",
+        outside a plain text sans font's coverage) - only dingbats with default *text* presentation
+        (e.g. the checkmark used on "Anwenden") render without this. Listing each platform's native
+        color-emoji font ahead of Inter lets Avalonia's per-glyph font fallback resolve the icon
+        characters correctly while regular label text still falls through to Inter as before.
+    -->
+    <FontFamily x:Key="PhotoSorterIconFontFamily">Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji,Inter</FontFamily>
 </ResourceDictionary>

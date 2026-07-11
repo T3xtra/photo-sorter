@@ -20,5 +20,6 @@ public static class HotkeyActionDisplayNames
         (HotkeyAction.ToggleFullscreen, "Vollbild umschalten"),
         (HotkeyAction.ZoomIn, "Vergrößern"),
         (HotkeyAction.ZoomOut, "Verkleinern"),
+        (HotkeyAction.ResetZoom, "Zoom zurücksetzen"),
     ];
 }

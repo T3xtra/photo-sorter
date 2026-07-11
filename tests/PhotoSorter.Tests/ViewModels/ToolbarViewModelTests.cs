@@ -66,55 +66,6 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
-    public void SelectLeftTargetTrashCommand_SetsLeftTargetToTrash()
-    {
-        var projectService = new FakeProjectService();
-        var sut = CreateSut(projectService: projectService);
-
-        sut.SelectLeftTargetTrashCommand.Execute(null);
-
-        Assert.True(projectService.Current.LeftTarget!.IsTrash);
-        Assert.Equal("Papierkorb", sut.LeftTargetDisplay);
-    }
-
-    [Fact]
-    public async Task SelectLeftTargetFolderCommand_WhenFolderPicked_SetsLeftTargetToThatFolder()
-    {
-        var picker = new FakeFolderPickerService { SingleSelection = "/trash-alternative" };
-        var projectService = new FakeProjectService();
-        var sut = CreateSut(picker, projectService);
-
-        await sut.SelectLeftTargetFolderCommand.ExecuteAsync(null);
-
-        Assert.False(projectService.Current.LeftTarget!.IsTrash);
-        Assert.Equal("/trash-alternative", sut.LeftTargetDisplay);
-    }
-
-    [Fact]
-    public async Task SelectRightTargetCommand_WhenCancelled_LeavesTargetUnset()
-    {
-        var picker = new FakeFolderPickerService { SingleSelection = null };
-        var projectService = new FakeProjectService();
-        var sut = CreateSut(picker, projectService);
-
-        await sut.SelectRightTargetCommand.ExecuteAsync(null);
-
-        Assert.Null(projectService.Current.RightTarget);
-        Assert.Equal("Nicht gewählt", sut.RightTargetDisplay);
-    }
-
-    [Fact]
-    public async Task SelectRightTargetCommand_WhenFolderPicked_UpdatesDisplay()
-    {
-        var picker = new FakeFolderPickerService { SingleSelection = "/export" };
-        var sut = CreateSut(picker);
-
-        await sut.SelectRightTargetCommand.ExecuteAsync(null);
-
-        Assert.Equal("/export", sut.RightTargetDisplay);
-    }
-
-    [Fact]
     public async Task SelectSourceFolderCommand_WhenFoldersPicked_RemembersThemInSettings()
     {
         var picker = new FakeFolderPickerService { Selection = ["/photos"] };
@@ -140,54 +91,15 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
-    public void SelectLeftTargetTrashCommand_RemembersTrashInSettings()
-    {
-        var settings = new FakeSettingsService();
-        settings.Current.LastLeftTargetPath = "/old-folder";
-        var sut = CreateSut(settingsService: settings);
-
-        sut.SelectLeftTargetTrashCommand.Execute(null);
-
-        Assert.True(settings.Current.LastLeftTargetIsTrash);
-        Assert.Null(settings.Current.LastLeftTargetPath);
-    }
-
-    [Fact]
-    public async Task SelectLeftTargetFolderCommand_WhenFolderPicked_RemembersItInSettings()
-    {
-        var picker = new FakeFolderPickerService { SingleSelection = "/trash-alternative" };
-        var settings = new FakeSettingsService { Current = { LastLeftTargetIsTrash = true } };
-        var sut = CreateSut(picker, settingsService: settings);
-
-        await sut.SelectLeftTargetFolderCommand.ExecuteAsync(null);
-
-        Assert.False(settings.Current.LastLeftTargetIsTrash);
-        Assert.Equal("/trash-alternative", settings.Current.LastLeftTargetPath);
-    }
-
-    [Fact]
-    public async Task SelectRightTargetCommand_WhenFolderPicked_RemembersItInSettings()
-    {
-        var picker = new FakeFolderPickerService { SingleSelection = "/export" };
-        var settings = new FakeSettingsService();
-        var sut = CreateSut(picker, settingsService: settings);
-
-        await sut.SelectRightTargetCommand.ExecuteAsync(null);
-
-        Assert.Equal("/export", settings.Current.LastRightTargetPath);
-    }
-
-    [Fact]
     public void Constructor_RestoresRememberedTrashLeftTarget()
     {
         var settings = new FakeSettingsService();
         settings.Current.LastLeftTargetIsTrash = true;
         var projectService = new FakeProjectService();
 
-        var sut = CreateSut(projectService: projectService, settingsService: settings);
+        CreateSut(projectService: projectService, settingsService: settings);
 
         Assert.True(projectService.Current.LeftTarget!.IsTrash);
-        Assert.Equal("Papierkorb", sut.LeftTargetDisplay);
     }
 
     [Fact]
@@ -198,10 +110,9 @@ public sealed class ToolbarViewModelTests
         settings.Current.LastRightTargetPath = existingFolder;
         var projectService = new FakeProjectService();
 
-        var sut = CreateSut(projectService: projectService, settingsService: settings);
+        CreateSut(projectService: projectService, settingsService: settings);
 
         Assert.Equal(existingFolder, projectService.Current.RightTarget!.Path);
-        Assert.Equal(existingFolder, sut.RightTargetDisplay);
     }
 
     [Fact]
@@ -243,6 +154,7 @@ public sealed class ToolbarViewModelTests
         Assert.Contains("Nach links sortieren: Left", message);
         // Reflects the actual current binding, including a rebind made through Settings (Phase 15).
         Assert.Contains("Nächstes Bild: PageDown", message);
+        Assert.Contains("Zoom zurücksetzen: Ctrl+D0", message);
     }
 
     private static ImageFile MakeImage(string name) => new() { FullPath = $"/{name}", FileName = name, SizeInBytes = 1 };

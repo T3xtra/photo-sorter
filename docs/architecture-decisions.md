@@ -775,3 +775,79 @@ in dieser Umgebung nicht tatsächlich gestartet. `PublishSingleFile` +
 Windows ist ein in der Avalonia-Community verbreitetes, dokumentiertes
 Muster, aber der erste echte Praxistest erfolgt beim nächsten `latest`-Build
 durch den Nutzer selbst.
+
+## 30. Toolbar-Layout: Drei-Zonen-Grid; Zielordner-Auswahl in die Einstellungen verschoben
+
+Auf Nutzerwunsch wurde die Toolbar neu angeordnet: Quelle bleibt linksbündig,
+Anwenden ist mittig zentriert, Hilfe und Einstellungen sind rechtsbündig
+gruppiert (Einstellungen ganz außen rechts). Die Links-/Rechts-Zielordner-
+Buttons sind aus der Toolbar verschwunden; die Auswahl lebt jetzt im
+Einstellungen-Fenster als eigener Tab "Zielordner".
+
+**Layout-Technik:** `ToolbarView.axaml` nutzt ein `Grid` mit
+`ColumnDefinitions="*,Auto,*"` statt einer einzelnen `StackPanel`. Die
+äußeren beiden Spalten sind gleich breite Sterne, wodurch die mittlere
+`Auto`-Spalte (Anwenden) unabhängig davon, wie viel Inhalt links bzw. rechts
+steht, exakt in der Mitte der gesamten Toolbar-Breite sitzt - der Standard-
+Trick für ein Drei-Zonen-Toolbar-Layout (links/mitte/rechts).
+
+**Neue `TargetFoldersViewModel` (Core):** Die komplette Links-/Rechts-Logik
+(Commands, Anzeige-Properties, "Ordner merken"-Persistenz) wurde
+unverändert aus `ToolbarViewModel` heraus in eine eigene, dialog-gebundene
+ViewModel-Klasse verschoben - dasselbe Muster wie `HotkeyBindingViewModel`
+(Punkt 24): von `AvaloniaSettingsDialogService` bei jedem Öffnen des
+Einstellungen-Fensters frisch konstruiert, als `SettingsViewModel.TargetFolders`
+exponiert. `AvaloniaSettingsDialogService` bekommt dafür zusätzlich
+`IFolderPickerService`/`IProjectService` als Konstruktorabhängigkeiten
+(beide bereits regulär registriert, keine DI-Registrierungsänderung nötig).
+
+**Was bewusst in `ToolbarViewModel` verblieben ist:** Das automatische
+Wiederherstellen der gemerkten Zielordner beim Programmstart
+(`RestoreRememberedTargets`, Punkt 15/23) bleibt in `ToolbarViewModel`, obwohl
+die zugehörige Auswahl-UI weggezogen ist. Grund: `ToolbarViewModel` ist
+garantiert Teil des beim Start konstruierten `MainWindowViewModel`-Graphen,
+während `TargetFoldersViewModel` (wie `SettingsViewModel`) nur entsteht,
+wenn der Nutzer das Einstellungen-Fenster tatsächlich öffnet - die
+Wiederherstellung muss aber unabhängig davon passieren, ob das Fenster je
+geöffnet wird. Die Alternative (einen eigenen Startup-Hook oder
+`ProjectService`-Erweiterung einzuführen) hätte mehr Code für denselben
+Effekt bedeutet.
+
+## 31. Icon-Glyphen: Font-Fallback-Kette statt Icon-Bibliothek; Zoom zurücksetzen als Hotkey + Statusleisten-Button
+
+**Fehlende Toolbar-Icons behoben:** `Avalonia.Fonts.Inter` (die app-weite
+Standardschrift) enthält keine Glyphen für Pictogramm-Symbole wie 📁/⚙/❓ -
+diese Zeichen haben in Unicode standardmäßig "Emoji-Darstellung" und liegen
+außerhalb der Glyphabdeckung einer schlichten Grotesk-Schrift wie Inter,
+anders als z. B. das Häkchen ✔ (Dingbat mit Standard-*Text*-Darstellung, das
+deshalb schon vorher sichtbar war). Statt eine Icon-Bibliothek oder eigene
+Icon-Assets einzuführen, bekommt ein neues Ressourcen-`FontFamily`
+(`PhotoSorterIconFontFamily` in `Colors.axaml`) eine Fallback-Kette aus den
+nativen Color-Emoji-Schriften aller drei Zielplattformen plus Inter als
+letztem Fallback: `Segoe UI Emoji,Apple Color Emoji,Noto Color Emoji,Inter`.
+Avalonia löst pro Glyph auf, welche Schrift in der Liste das jeweilige
+Zeichen tatsächlich enthält - normaler Text fällt weiterhin auf Inter
+zurück, nur die Icon-Zeichen wandern zur passenden System-Emoji-Schrift.
+Angewendet auf alle Toolbar-Buttons und das ⚠-Warnsymbol für defekte
+Thumbnails (Konsistenz/Robustheit, auch wenn dessen Sichtbarkeit nicht
+konkret gemeldet wurde).
+
+**"Zoom zurücksetzen" (Hotkey + Button):** Neuer `HotkeyAction.ResetZoom`
+(Standard: Strg+0) und `ImageViewerViewModel.ResetZoomCommand` - im
+Unterschied zum bestehenden `ToggleZoomModeCommand` (wechselt zwischen
+Einpassen und Manuell) landet dieser Befehl über den bereits vorhandenen
+`ResetZoomAndPan()`-Helfer immer bei "Bild einpassen", unabhängig vom
+aktuellen Modus. Der zugehörige Button sitzt in der Statusleiste direkt
+neben der Zoom-Prozentanzeige.
+
+**Command-Bridge statt direkter Kopplung:** `StatusBarViewModel` hatte
+bisher bewusst keine Abhängigkeit auf `ImageViewerViewModel` (siehe
+`MainWindowViewModel`s Klassenkommentar: "bridges state between siblings
+that shouldn't reference each other directly", bereits für `ZoomPercentage`
+so gelöst). Für den neuen Button wurde dasselbe Muster auf einen Befehl
+erweitert: `StatusBarViewModel.ResetZoomCommand` ist eine einfache
+settbare Property (kein Konstruktor-Parameter), die `MainWindowViewModel`
+nach der Konstruktion einmalig auf
+`imageViewerViewModel.ResetZoomCommand` setzt - keine neue Kopplung
+zwischen den Geschwister-ViewModels, nur eine Erweiterung der bereits
+etablierten Bridge-Stelle.

@@ -13,7 +13,16 @@
             <TextBlock Text="{Binding LeftCount, StringFormat='Links: {0}'}" Foreground="{StaticResource PhotoSorterTextBrush}" />
             <TextBlock Text="{Binding RightCount, StringFormat='Rechts: {0}'}" Foreground="{StaticResource PhotoSorterTextBrush}" />
             <TextBlock Text="{Binding OpenCount, StringFormat='Offen: {0}'}" Foreground="{StaticResource PhotoSorterTextBrush}" />
-            <TextBlock Text="{Binding ZoomPercentage, StringFormat='Zoom: {0} %'}" Foreground="{StaticResource PhotoSorterTextBrush}" />
+            <StackPanel Orientation="Horizontal" Spacing="4">
+                <TextBlock VerticalAlignment="Center"
+                           Text="{Binding ZoomPercentage, StringFormat='Zoom: {0} %'}"
+                           Foreground="{StaticResource PhotoSorterTextBrush}" />
+                <Button Content="↺"
+                        FontFamily="{StaticResource PhotoSorterIconFontFamily}"
+                        Padding="4,0"
+                        Command="{Binding ResetZoomCommand}"
+                        ToolTip.Tip="Zoom auf „Bild einpassen“ zurücksetzen" />
+            </StackPanel>
             <TextBlock Text="{Binding CurrentFileName}" Foreground="{StaticResource PhotoSorterTextBrush}" />
         </StackPanel>
     </Border>

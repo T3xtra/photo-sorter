@@ -11,7 +11,10 @@ using PhotoSorter.Core.Services.Abstractions;
 
 namespace PhotoSorter.Core.ViewModels;
 
-/// <summary>ViewModel for the toolbar (source folder, left/right targets, apply, settings, help).</summary>
+/// <summary>
+/// ViewModel for the toolbar (source folder, apply, help, settings). Left/right target
+/// selection lives in Settings (<see cref="TargetFoldersViewModel"/>) instead of here.
+/// </summary>
 public sealed partial class ToolbarViewModel : ViewModelBase
 {
     private readonly IFolderPickerService _folderPicker;
@@ -32,12 +35,6 @@ public sealed partial class ToolbarViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ApplyCommand))]
     private bool _isApplying;
-
-    [ObservableProperty]
-    private string _leftTargetDisplay = "Nicht gewählt";
-
-    [ObservableProperty]
-    private string _rightTargetDisplay = "Nicht gewählt";
 
     public ToolbarViewModel(
         IFolderPickerService folderPicker,
@@ -60,10 +57,7 @@ public sealed partial class ToolbarViewModel : ViewModelBase
         _hotkeyService = hotkeyService;
         _logger = logger;
 
-        _projectService.TargetsChanged += (_, _) => UpdateTargetDisplays();
-        _projectService.ProjectChanged += (_, _) => UpdateTargetDisplays();
         _projectService.DecisionsChanged += (_, _) => ApplyCommand.NotifyCanExecuteChanged();
-        UpdateTargetDisplays();
         RestoreRememberedTargets();
     }
 
@@ -71,7 +65,10 @@ public sealed partial class ToolbarViewModel : ViewModelBase
     /// "Ordner merken" (Roadmap Phase 15): unlike the source folder (a different photo set each
     /// session, so it's only offered as the folder picker's starting point), left/right targets
     /// tend to be fixed "sort into" folders reused across sessions, so they're restored as the
-    /// actual project targets on startup - provided the folder still exists.
+    /// actual project targets on startup - provided the folder still exists. Left/right selection
+    /// UI has since moved to Settings (<see cref="TargetFoldersViewModel"/>), but this restore
+    /// stays here since <see cref="ToolbarViewModel"/> is what's guaranteed constructed at app
+    /// startup (Settings is only built when the user opens it).
     /// </summary>
     private void RestoreRememberedTargets()
     {
@@ -120,41 +117,6 @@ public sealed partial class ToolbarViewModel : ViewModelBase
         finally
         {
             IsLoadingImages = false;
-        }
-    }
-
-    /// <summary>The left target may be the trash (SoftwareDesign.md), so it has no folder dialog on its own.</summary>
-    [RelayCommand]
-    private void SelectLeftTargetTrash()
-    {
-        _projectService.SetLeftTarget(TargetFolder.Trash());
-        _settingsService.Current.LastLeftTargetIsTrash = true;
-        _settingsService.Current.LastLeftTargetPath = null;
-        _ = _settingsService.SaveAsync();
-    }
-
-    [RelayCommand]
-    private async Task SelectLeftTargetFolderAsync()
-    {
-        var path = await _folderPicker.PickFolderAsync("Linken Zielordner auswählen", _settingsService.Current.LastLeftTargetPath);
-        if (path is not null)
-        {
-            _projectService.SetLeftTarget(TargetFolder.At(path));
-            _settingsService.Current.LastLeftTargetIsTrash = false;
-            _settingsService.Current.LastLeftTargetPath = path;
-            _ = _settingsService.SaveAsync();
-        }
-    }
-
-    [RelayCommand]
-    private async Task SelectRightTargetAsync()
-    {
-        var path = await _folderPicker.PickFolderAsync("Rechten Zielordner auswählen", _settingsService.Current.LastRightTargetPath);
-        if (path is not null)
-        {
-            _projectService.SetRightTarget(TargetFolder.At(path));
-            _settingsService.Current.LastRightTargetPath = path;
-            _ = _settingsService.SaveAsync();
         }
     }
 
@@ -220,17 +182,4 @@ public sealed partial class ToolbarViewModel : ViewModelBase
             IsApplying = false;
         }
     }
-
-    private void UpdateTargetDisplays()
-    {
-        LeftTargetDisplay = Describe(_projectService.Current.LeftTarget);
-        RightTargetDisplay = Describe(_projectService.Current.RightTarget);
-    }
-
-    private static string Describe(TargetFolder? target) => target switch
-    {
-        null => "Nicht gewählt",
-        { IsTrash: true } => "Papierkorb",
-        _ => target.Path!,
-    };
 }

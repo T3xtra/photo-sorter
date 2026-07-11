@@ -13,11 +13,19 @@ public sealed class AvaloniaSettingsDialogService : ISettingsDialogService
 {
     private readonly ISettingsService _settingsService;
     private readonly IHotkeyService _hotkeyService;
+    private readonly IFolderPickerService _folderPicker;
+    private readonly IProjectService _projectService;
 
-    public AvaloniaSettingsDialogService(ISettingsService settingsService, IHotkeyService hotkeyService)
+    public AvaloniaSettingsDialogService(
+        ISettingsService settingsService,
+        IHotkeyService hotkeyService,
+        IFolderPickerService folderPicker,
+        IProjectService projectService)
     {
         _settingsService = settingsService;
         _hotkeyService = hotkeyService;
+        _folderPicker = folderPicker;
+        _projectService = projectService;
     }
 
     public async Task ShowAsync(CancellationToken cancellationToken = default)
@@ -28,7 +36,8 @@ public sealed class AvaloniaSettingsDialogService : ISettingsDialogService
             return;
         }
 
-        var viewModel = new SettingsViewModel(_settingsService, _hotkeyService);
+        var targetFolders = new TargetFoldersViewModel(_folderPicker, _projectService, _settingsService);
+        var viewModel = new SettingsViewModel(_settingsService, _hotkeyService, targetFolders);
         var window = new SettingsWindow(viewModel);
 
         await window.ShowDialog(owner);

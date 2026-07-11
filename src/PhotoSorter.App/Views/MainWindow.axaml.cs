@@ -56,6 +56,7 @@ public partial class MainWindow : Window
             HotkeyAction.Undo => Execute(viewModel.ImageViewerViewModel.UndoCommand),
             HotkeyAction.ZoomIn => Execute(() => viewModel.ImageViewerViewModel.ApplyZoomDelta(1)),
             HotkeyAction.ZoomOut => Execute(() => viewModel.ImageViewerViewModel.ApplyZoomDelta(-1)),
+            HotkeyAction.ResetZoom => Execute(viewModel.ImageViewerViewModel.ResetZoomCommand),
             HotkeyAction.ToggleFullscreen => Execute(ToggleFullscreen),
             _ => false,
         };

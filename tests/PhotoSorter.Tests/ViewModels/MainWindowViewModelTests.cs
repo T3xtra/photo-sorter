@@ -47,4 +47,24 @@ public sealed class MainWindowViewModelTests
         Assert.Equal((int)System.Math.Round(sut.ImageViewerViewModel.ZoomFactor * 100), sut.StatusBarViewModel.ZoomPercentage);
         Assert.True(sut.StatusBarViewModel.ZoomPercentage > 100);
     }
+
+    [Fact]
+    public void Constructor_WiresStatusBarResetZoomCommand_ToImageViewerResetZoomCommand()
+    {
+        var sut = CreateSut();
+
+        Assert.Same(sut.ImageViewerViewModel.ResetZoomCommand, sut.StatusBarViewModel.ResetZoomCommand);
+    }
+
+    [Fact]
+    public void StatusBarResetZoomCommand_WhenExecuted_ResetsImageViewerZoom()
+    {
+        var sut = CreateSut();
+        sut.ImageViewerViewModel.ApplyZoomDelta(1);
+
+        sut.StatusBarViewModel.ResetZoomCommand!.Execute(null);
+
+        Assert.Equal(ZoomMode.FitToWindow, sut.ImageViewerViewModel.ZoomMode);
+        Assert.Equal(1.0, sut.ImageViewerViewModel.ZoomFactor);
+    }
 }

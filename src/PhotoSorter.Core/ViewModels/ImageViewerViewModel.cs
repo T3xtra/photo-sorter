@@ -202,6 +202,10 @@ public sealed partial class ImageViewerViewModel : ViewModelBase
         ResetZoomAndPan(keepMode: true);
     }
 
+    /// <summary>Resets back to "Bild einpassen", discarding any manual zoom/pan - unlike <see cref="ToggleZoomMode"/>, this always lands on fit-to-window regardless of the current mode.</summary>
+    [RelayCommand]
+    private void ResetZoom() => ResetZoomAndPan();
+
     private void ResetZoomAndPan(bool keepMode = false)
     {
         if (!keepMode)

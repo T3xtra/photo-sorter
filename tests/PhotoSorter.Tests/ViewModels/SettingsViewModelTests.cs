@@ -8,11 +8,14 @@ namespace PhotoSorter.Tests.ViewModels;
 
 public sealed class SettingsViewModelTests
 {
+    private static TargetFoldersViewModel CreateTargetFolders(FakeSettingsService? settings = null) =>
+        new(new FakeFolderPickerService(), new FakeProjectService(), settings ?? new FakeSettingsService());
+
     private static (SettingsViewModel Sut, FakeSettingsService Settings, HotkeyService Hotkeys) CreateSut()
     {
         var settings = new FakeSettingsService();
         var hotkeys = new HotkeyService(settings);
-        return (new SettingsViewModel(settings, hotkeys), settings, hotkeys);
+        return (new SettingsViewModel(settings, hotkeys, CreateTargetFolders(settings)), settings, hotkeys);
     }
 
     [Fact]
@@ -22,9 +25,21 @@ public sealed class SettingsViewModelTests
         settings.Current.AnimationsEnabled = false;
         var hotkeys = new HotkeyService(settings);
 
-        var sut = new SettingsViewModel(settings, hotkeys);
+        var sut = new SettingsViewModel(settings, hotkeys, CreateTargetFolders(settings));
 
         Assert.False(sut.AnimationsEnabled);
+    }
+
+    [Fact]
+    public void Constructor_ExposesTheGivenTargetFoldersViewModel()
+    {
+        var targetFolders = CreateTargetFolders();
+        var settings = new FakeSettingsService();
+        var hotkeys = new HotkeyService(settings);
+
+        var sut = new SettingsViewModel(settings, hotkeys, targetFolders);
+
+        Assert.Same(targetFolders, sut.TargetFolders);
     }
 
     [Fact]

@@ -10,26 +10,31 @@ namespace PhotoSorter.Core.ViewModels;
 
 /// <summary>
 /// ViewModel for the "Einstellungen" window: Hotkeys, Dark Mode (informational, see
-/// <c>docs/architecture-decisions.md</c> point 5), and "Animationen ein/aus". Constructed fresh
-/// each time the dialog opens (see <see cref="ISettingsDialogService"/>), so it always reflects
-/// the current <see cref="IHotkeyService"/>/<see cref="ISettingsService"/> state.
+/// <c>docs/architecture-decisions.md</c> point 5), "Animationen ein/aus", and the "Zielordner"
+/// tab (<see cref="TargetFoldersViewModel"/>). Constructed fresh each time the dialog opens (see
+/// <see cref="ISettingsDialogService"/>), so it always reflects the current
+/// <see cref="IHotkeyService"/>/<see cref="ISettingsService"/> state.
 /// </summary>
 public sealed partial class SettingsViewModel : ViewModelBase
 {
     private readonly ISettingsService _settingsService;
     private readonly IHotkeyService _hotkeyService;
 
-    public SettingsViewModel(ISettingsService settingsService, IHotkeyService hotkeyService)
+    public SettingsViewModel(ISettingsService settingsService, IHotkeyService hotkeyService, TargetFoldersViewModel targetFolders)
     {
         _settingsService = settingsService;
         _hotkeyService = hotkeyService;
         _animationsEnabled = settingsService.Current.AnimationsEnabled;
+        TargetFolders = targetFolders;
 
         var displayNames = HotkeyActionDisplayNames.Ordered.ToDictionary(entry => entry.Action, entry => entry.DisplayName);
         HotkeyBindings = HotkeyActionDisplayNames.Ordered
             .Select(entry => new HotkeyBindingViewModel(entry.Action, entry.DisplayName, hotkeyService, action => displayNames[action]))
             .ToList();
     }
+
+    /// <summary>"Zielordner" tab: left/right sort target selection (moved here from the toolbar).</summary>
+    public TargetFoldersViewModel TargetFolders { get; }
 
     /// <summary>"Dark Mode" is fixed per architecture decision 5 - shown as an informational, disabled toggle.</summary>
     public bool DarkModeEnabled => true;

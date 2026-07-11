@@ -23,6 +23,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         imageViewerViewModel.PropertyChanged += OnImageViewerPropertyChanged;
         UpdateZoomDisplay();
+        StatusBarViewModel.ResetZoomCommand = imageViewerViewModel.ResetZoomCommand;
     }
 
     public ToolbarViewModel ToolbarViewModel { get; }
